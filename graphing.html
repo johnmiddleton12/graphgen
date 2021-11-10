@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://www.desmos.com/api/v1.6/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+
+</head>
+
+<body>
+    <!-- <div id="calculator" style="width: 600px; height: 400px;"></div> -->
+    <button id="snapshot" style="position: relative; top: 40; left: 90; z-index: 200;">snapshot</button>
+    <button id="print" style="position: relative; top: 40; left: 40; z-index: 200;">print and copy</button>
+    <div id="calculator" style="position: fixed; top: 0; left: 0; height: 100%; width: 100%;"></div>
+    <div id="text" style="position: absolute; top: 0; left: 0; height: 100%; width: 100%; text-align: center; display: table;">
+        <h1 style="display: table-cell; vertical-align: middle; font-size: 10vw; font-family: 'Noto Sans', sans-serif, monospace;">the graph nft</h1>
+    </div>
+    <script>
+        var base64s = "";
+   
+        var stateList = "";
+
+        var elt = document.getElementById('calculator');
+        // var calculator = Desmos.GraphingCalculator(elt);
+        var calculator = Desmos.GraphingCalculator(elt, {
+            expressions: false,
+            settingsMenu: false,
+            lockViewport: true,
+        });
+
+        calculator.setExpressions([
+            { id: '1', latex: 'a=1' },
+            { id: '2', latex: 'b=1' },
+            { id: '3', latex: 'y=b\\sin(x+a)', color: Desmos.Colors.GREEN, lineWidth: 10 }
+        ]);
+
+        var testVar = 0;
+        var id = setInterval(frame, 5);
+        var mouseX = window.innerWidth / 2;
+
+        function frame() {
+            calculator.setExpression({ id: '1', latex: 'a=' + (testVar + (mouseX / 100)) });
+            testVar += .01;
+        }
+
+        var updateVariable = function (evt) {
+            mouseX = evt.pageX;
+            calculator.setExpression({ id: '2', latex: 'b=' + (evt.pageY / 100) });
+        };
+
+        document.addEventListener('mousemove', updateVariable, true);
+
+
+        calculator.updateSettings({ showGrid: false, showXAxis: false, showYAxis: false })
+
+        function snapshot(data) {
+            base64s += data + "JUMBALAYA";
+        }
+
+        document.getElementById('snapshot').addEventListener('click', function () {
+
+            calculator.getExpressions().forEach(element => {
+                calculator.removeExpression(element);
+            });
+
+            document.removeEventListener('mousemove', updateVariable, true);
+
+            for (let i = 0; i < 11; i++) {
+
+                calculator.setExpression({ id: 'graph1', latex: 'y=x^' + i });
+                calculator.setExpression({ id: 'graph2', latex: '' });
+
+                if (i == 10) {
+                    calculator.setExpression({ id: 'graph1', latex: String.raw`y=x\sin(1/x)` });
+                    calculator.setMathBounds({
+                        left: -1,
+                        right: 1,
+                        bottom: -1,
+                        top: 1
+                    });
+                }
+                stateList += JSON.stringify(calculator.getState()) + "\n";
+
+                calculator.asyncScreenshot({
+                    width: 200,
+                    height: 200,
+                    targetPixelRatio: 2
+                }, snapshot);
+
+            }
+
+        });
+
+        document.getElementById('print').addEventListener('click', function () {
+            console.log(base64s);
+            navigator.clipboard.writeText(stateList + "INTERRUPT" + base64s);
+        })
+
+    </script>
+</body>
+
+</html>
